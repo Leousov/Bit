@@ -1,4 +1,4 @@
-namespace Bit
+ namespace Bit
 {
     public class WeatherForecast
     {
