@@ -23,7 +23,14 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapControllerRoute(
+    name: "d_create",
+    pattern: "{controller=Data}/{action=Create}/");
 
-app.MapGet("/", (ApplicationContext db) => (db.Users.ToList(), db.UserRights.ToList(), db.Rights.ToList()));
+app.MapControllerRoute(
+    name: "d_read",
+    pattern: "{controller=Data}/{action=Read}/");
+
+app.MapGet("/", (ApplicationContext db) => db.Rights.ToList());
 
 app.Run();
