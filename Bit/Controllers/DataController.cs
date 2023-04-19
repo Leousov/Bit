@@ -7,7 +7,7 @@ namespace Bit.Controllers
     {
         // GET: DataController
         [HttpGet]
-        public ActionResult Read()
+        public ActionResult Index()
         {
             return View();
         }
