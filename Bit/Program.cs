@@ -8,53 +8,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Security.Cryptography;
-static byte[] GenerateIV()
-{
-    byte[] iv = new byte[64]; // размер IV должен соответствовать размеру блока шифрования
 
-    using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
-    {
-        rng.GetBytes(iv); // генерируем случайные байты и записываем их в массив IV
-    }
-
-    return iv;
-}
-string Encrypt(string text, string key, string iv)
-{
-    byte[] encrypted;
-    using (AesCryptoServiceProvider aes = new AesCryptoServiceProvider())
-    {
-        aes.Key = Encoding.UTF8.GetBytes(key);
-        aes.IV = Encoding.UTF8.GetBytes(iv);
-
-        ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-
-        byte[] inputBytes = Encoding.UTF8.GetBytes(text);
-        encrypted = encryptor.TransformFinalBlock(inputBytes, 0, inputBytes.Length);
-    }
-
-    return Convert.ToBase64String(encrypted);
-}
-string Decrypt(string encryptedText, string key, string iv)
-{
-    byte[] decrypted;
-    using (AesCryptoServiceProvider aes = new AesCryptoServiceProvider())
-    {
-        aes.Key = Encoding.UTF8.GetBytes(key);
-        aes.IV = Encoding.UTF8.GetBytes(iv);
-
-        ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-
-        byte[] inputBytes = Convert.FromBase64String(encryptedText);
-        decrypted = decryptor.TransformFinalBlock(inputBytes, 0, inputBytes.Length);
-    }
-
-    return Encoding.UTF8.GetString(decrypted);
-}
-
-byte[] IV = GenerateIV();
-
-
+Console.WriteLine(AesEncryptor.Decrypt(AesEncryptor.Encrypt("asdasd")));
 var builder = WebApplication.CreateBuilder(args);
 
 string connection = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -101,7 +56,8 @@ app.MapGet("/Data/Read/", [Authorize](ApplicationContext db) => { //
     try
     {
         var data = db.Data.ToList();
-        return Results.Json(data);
+        Console.WriteLine(data);
+        return Results.Json(AesEncryptor.Encrypt(data.ToString()));
     }
     catch
     {
@@ -174,5 +130,4 @@ public class AuthOptions
     public static SymmetricSecurityKey GetSymmetricSecurityKey() =>
         new SymmetricSecurityKey(Encoding.UTF8.GetBytes(KEY));
 }
-
 

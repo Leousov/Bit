@@ -43,6 +43,35 @@
         </tbody>
     </table>
     <script>
+        const key = new Uint8Array([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
+        const message = "Hello, world!";
+        async function encryptString(message, key) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+
+            const iv = window.crypto.getRandomValues(new Uint8Array(16));
+            const algorithm = { name: 'AES-CBC', iv };
+            const cryptoKey = await window.crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['encrypt']);
+
+            const encryptedData = await window.crypto.subtle.encrypt(algorithm, cryptoKey, data);
+            const buffer = new Uint8Array(iv.byteLength + encryptedData.byteLength);
+            buffer.set(iv);
+            buffer.set(new Uint8Array(encryptedData), iv.byteLength);
+            return buffer;
+        }
+        async function decryptString(encryptedData, key) {
+            const iv = encryptedData.slice(0, 16);
+            const data = encryptedData.slice(16);
+            const algorithm = { name: 'AES-CBC', iv };
+            const cryptoKey = await window.crypto.subtle.importKey('raw', key, 'AES-CBC', false, ['decrypt']);
+
+            const decryptedData = await window.crypto.subtle.decrypt(algorithm, cryptoKey, data);
+            const decoder = new TextDecoder();
+            const plaintext = decoder.decode(decryptedData);
+
+            return plaintext;
+        }
+
         var tokenKey = "accessToken";
         document.getElementById("submitLogin").addEventListener("click", async e => {
             e.preventDefault();
@@ -58,6 +87,9 @@
                 })
             });
             if (response.ok === true) {
+                const encryptedData = await encryptString(message, key);
+                console.log(encryptedData);
+                console.log(decryptString(encryptedData,key));
                 const data = await response.json();
                 document.getElementById("userName").innerText = data.login;
                 document.getElementById("userInfo").style.display = "block";
@@ -81,9 +113,12 @@
 
             try {
                 if (response.ok === true) {
-                    const datas = await response.json();
+                    const d = await response.json();
+                    console.log(d);
+                    const datas = decryptString(d, key);
+                    const ddatas = JSON.parse(datas)
                     const rows = document.querySelector("tbody");
-                    datas.forEach(data => rows.append(row(data)));
+                    ddatas.forEach(data => rows.append(row(data)));
                 } else {
                     console.log("Ошибка получения данных: " + response.status);
                 }
