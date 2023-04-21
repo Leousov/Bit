@@ -7,8 +7,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Security.Cryptography;
+using System.Text.Json;
 
+using System.Security.Cryptography;
+Console.WriteLine(AesEncryptor.Encrypt("asdasd"));
 Console.WriteLine(AesEncryptor.Decrypt(AesEncryptor.Encrypt("asdasd")));
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,8 +58,10 @@ app.MapGet("/Data/Read/", [Authorize](ApplicationContext db) => { //
     try
     {
         var data = db.Data.ToList();
-        Console.WriteLine(data);
-        return Results.Json(AesEncryptor.Encrypt(data.ToString()));
+        Console.WriteLine(JsonSerializer.Serialize(data));
+        Console.WriteLine(AesEncryptor.Encrypt(JsonSerializer.Serialize(data)));
+
+        return Results.Json( AesEncryptor.Encrypt( JsonSerializer.Serialize(data)));
     }
     catch
     {

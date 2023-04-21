@@ -23,7 +23,8 @@
         };
         
 
-        public static string Encrypt(string plainText)
+        //public static string Encrypt(string plainText)
+        public static byte[] Encrypt(string plainText)
         {
             // Инициализируем объект класса Aes для шифрования данных
             using (Aes aes = Aes.Create())
@@ -50,14 +51,17 @@
                     }
 
                     // Возвращаем зашифрованные данные в виде Base64-строки
-                    return Convert.ToBase64String(memoryStream.ToArray());
+                    //return Convert.ToBase64String(memoryStream.ToArray());
+                    return memoryStream.ToArray();
                 }
             }
         }
 
-        public static string Decrypt(string encryptedText)
+        //public static string Decrypt(string encryptedText)
+        public static string Decrypt(byte[] encryptedText)
         {
-            byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
+            //byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
+            byte[] encryptedBytes = encryptedText;
 
             using (Aes aes = Aes.Create())
             {

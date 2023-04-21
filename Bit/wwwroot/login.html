@@ -45,6 +45,23 @@
     <script>
         const key = new Uint8Array([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF]);
         const message = "Hello, world!";
+
+        function stringToUint(string) {
+            var string = btoa(unescape(encodeURIComponent(string))),
+                charList = string.split(''),
+                uintArray = [];
+            for (var i = 0; i < charList.length; i++) {
+                uintArray.push(charList[i].charCodeAt(0));
+            }
+            return new Uint8Array(uintArray);
+        }
+
+        function uintToString(uintArray) {
+            var encodedString = String.fromCharCode.apply(null, uintArray),
+                decodedString = decodeURIComponent(escape(atob(encodedString)));
+            return decodedString;
+        }
+
         async function encryptString(message, key) {
             const encoder = new TextEncoder();
             const data = encoder.encode(message);
@@ -57,6 +74,7 @@
             const buffer = new Uint8Array(iv.byteLength + encryptedData.byteLength);
             buffer.set(iv);
             buffer.set(new Uint8Array(encryptedData), iv.byteLength);
+            
             return buffer;
         }
         async function decryptString(encryptedData, key) {
@@ -88,7 +106,9 @@
             });
             if (response.ok === true) {
                 const encryptedData = await encryptString(message, key);
+                console.log(1);
                 console.log(encryptedData);
+                console.log(2);
                 console.log(decryptString(encryptedData,key));
                 const data = await response.json();
                 document.getElementById("userName").innerText = data.login;
