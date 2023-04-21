@@ -106,10 +106,10 @@
             });
             if (response.ok === true) {
                 const encryptedData = await encryptString(message, key);
-                console.log(1);
-                console.log(encryptedData);
-                console.log(2);
-                console.log(decryptString(encryptedData,key));
+                //console.log(1);
+                //console.log(encryptedData);
+                //console.log(2);
+                //console.log(decryptString(encryptedData,key));
                 const data = await response.json();
                 document.getElementById("userName").innerText = data.login;
                 document.getElementById("userInfo").style.display = "block";
@@ -135,10 +135,22 @@
                 if (response.ok === true) {
                     const d = await response.json();
                     console.log(d);
-                    const datas = decryptString(d, key);
-                    const ddatas = JSON.parse(datas)
-                    const rows = document.querySelector("tbody");
-                    ddatas.forEach(data => rows.append(row(data)));
+
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(d);
+                    
+                    console.log(encryptString("asd", key));
+                    //const uint8Array = new Uint8Array(data);
+                    //const jsonObject = TextDecoder.decode(d);
+                    //const dataArray = jsonObject.data;
+                    //const uint8Array = new Uint8Array(dataArray);
+                    console.log(data);
+
+                    const datas = decryptString(data, key);
+
+                    //const ddatas = JSON.parse(datas)
+                    //const rows = document.querySelector("tbody");
+                    //ddatas.forEach(data => rows.append(row(data)));
                 } else {
                     console.log("Ошибка получения данных: " + response.status);
                 }

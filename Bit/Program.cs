@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json;
 
 using System.Security.Cryptography;
-Console.WriteLine(AesEncryptor.Encrypt("asdasd"));
+Console.WriteLine(AesEncryptor.Encrypt("asd"));
 Console.WriteLine(AesEncryptor.Decrypt(AesEncryptor.Encrypt("asdasd")));
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,10 +58,11 @@ app.MapGet("/Data/Read/", [Authorize](ApplicationContext db) => { //
     try
     {
         var data = db.Data.ToList();
-        Console.WriteLine(JsonSerializer.Serialize(data));
-        Console.WriteLine(AesEncryptor.Encrypt(JsonSerializer.Serialize(data)));
-
-        return Results.Json( AesEncryptor.Encrypt( JsonSerializer.Serialize(data)));
+        var miss = AesEncryptor.Encrypt(JsonSerializer.Serialize(data));
+        var j = JsonSerializer.Serialize(miss);
+        var jj = JsonSerializer.Deserialize<byte[]>(j);
+        Console.WriteLine(AesEncryptor.Decrypt(jj));
+        return Results.Json(miss);
     }
     catch
     {
