@@ -13,7 +13,7 @@
         <h3>Вход на сайт</h3>
         <p>
             <label>Введите login</label><br />
-            <input type="login" id="login" />
+            <input type="email" id="login" />
         </p>
         <p>
             <label>Введите пароль</label><br />
@@ -24,59 +24,100 @@
     <p>
         <input type="submit" id="getData" value="Получить данные" />
     </p>
+    <h2>Data:</h2>
+    <div>
+        <input type="hidden" id="id" />
+        <p>
+            Value:<br />
+            <input id="value" />
+        </p>
+        <p>
+            <button id="saveBtn">Сохранить</button>
+            <button id="resetBtn">Сбросить</button>
+            <button id="loadd">Load Data</button>
+        </p>
+    </div>
+    <table>
+        <thead><tr><th>Value</th><th></th></tr></thead>
+        <tbody>
+        </tbody>
+    </table>
     <script>
         var tokenKey = "accessToken";
-        // при нажатии на кнопку отправки формы идет запрос к /login для получения токена
         document.getElementById("submitLogin").addEventListener("click", async e => {
             e.preventDefault();
-            // отправляет запрос и получаем ответ
             const response = await fetch("http://localhost:5292/login", {
                 method: "POST",
-                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                headers: {
+                    "Accept": "application/json", "Content-Type": "application/json"                
+                },
                 body: JSON.stringify({
                     id: 0,
                     login: document.getElementById("login").value,
                     password: document.getElementById("password").value
                 })
             });
-            // если запрос прошел нормально
             if (response.ok === true) {
-                // получаем данные
                 const data = await response.json();
-                // изменяем содержимое и видимость блоков на странице
                 document.getElementById("userName").innerText = data.login;
                 document.getElementById("userInfo").style.display = "block";
                 document.getElementById("loginForm").style.display = "none";
-                // сохраняем в хранилище sessionStorage токен доступа
                 sessionStorage.setItem(tokenKey, data.access_token);
             }
-            else  // если произошла ошибка, получаем код статуса
+            else  
                 console.log("Status: ", response.status);
         });
 
-        // кнопка для обращения по пути "/data" для получения данных
         document.getElementById("getData").addEventListener("click", async e => {
             e.preventDefault();
-            // получаем токен из sessionStorage
             const token = sessionStorage.getItem(tokenKey);
-            // отправляем запрос к "/data
             const response = await fetch("http://localhost:5292/Data/Read/", {
                 method: "GET",
                 headers: {
                     "Accept": "application/json",
-                    "Authorization": "Bearer " + token  // передача токена в заголовке
+                    "Authorization": "Bearer " + token // передача токена в заголовке
                 }
             });
 
-            if (response.ok === true) {
-                const data = await response.json();
-                alert(data.message);
+            try {
+                if (response.ok === true) {
+                    const datas = await response.json();
+                    const rows = document.querySelector("tbody");
+                    datas.forEach(data => rows.append(row(data)));
+                } else {
+                    console.log("Ошибка получения данных: " + response.status);
+                }
+            } catch (error) {
+                console.log("Произошла ошибка: " + error.message);
             }
-            else
-                console.log("Status: ", response.status);
-        });
 
-        // условный выход - просто удаляем токен и меняем видимость блоков
+        });
+        async function createData(Value) {
+            const token = sessionStorage.getItem(tokenKey);
+            const response = await fetch("http://localhost:5292/Data/Write/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token // передача токена в заголовке
+                },
+                body: JSON.stringify({
+                    id: 0,
+                    value: Value
+                })
+            });
+            if (response.ok === true) {
+                const data = response.json();
+                document.querySelector("tbody").append(row(data));
+            }
+            else {
+                const error = response.json();
+                console.log(error.message);
+            }
+        }
+        function reset() {
+            document.getElementById("id").value =
+                document.getElementById("value").value = "";
+        }
         document.getElementById("logOut").addEventListener("click", e => {
 
             e.preventDefault();
@@ -84,6 +125,32 @@
             document.getElementById("userInfo").style.display = "none";
             document.getElementById("loginForm").style.display = "block";
             sessionStorage.removeItem(tokenKey);
+        });
+        function row(data) {
+
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", data.id);
+
+            const val = document.createElement("td");
+            val.append(data.value);
+            tr.append(val);
+
+            return tr;
+        }
+        document.getElementById("resetBtn").addEventListener("click", () => reset());
+
+        // отправка формы
+        document.getElementById("saveBtn").addEventListener("click", () => {
+
+            const id = document.getElementById("id").value;
+            const value = document.getElementById("value").value;
+            createData(value)
+            reset();
+        });
+        document.getElementById("loadd").addEventListener("click", () => {
+            const rows = document.querySelector("tbody");
+            rows.rows.forEach(elem => rows.deleteRow(elem.id));
+            getData();
         });
     </script>
 </body>

@@ -7,26 +7,61 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System;
+using System.Security.Cryptography;
+static byte[] GenerateIV()
+{
+    byte[] iv = new byte[64]; // размер IV должен соответствовать размеру блока шифрования
+
+    using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+    {
+        rng.GetBytes(iv); // генерируем случайные байты и записываем их в массив IV
+    }
+
+    return iv;
+}
+string Encrypt(string text, string key, string iv)
+{
+    byte[] encrypted;
+    using (AesCryptoServiceProvider aes = new AesCryptoServiceProvider())
+    {
+        aes.Key = Encoding.UTF8.GetBytes(key);
+        aes.IV = Encoding.UTF8.GetBytes(iv);
+
+        ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+        byte[] inputBytes = Encoding.UTF8.GetBytes(text);
+        encrypted = encryptor.TransformFinalBlock(inputBytes, 0, inputBytes.Length);
+    }
+
+    return Convert.ToBase64String(encrypted);
+}
+string Decrypt(string encryptedText, string key, string iv)
+{
+    byte[] decrypted;
+    using (AesCryptoServiceProvider aes = new AesCryptoServiceProvider())
+    {
+        aes.Key = Encoding.UTF8.GetBytes(key);
+        aes.IV = Encoding.UTF8.GetBytes(iv);
+
+        ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+
+        byte[] inputBytes = Convert.FromBase64String(encryptedText);
+        decrypted = decryptor.TransformFinalBlock(inputBytes, 0, inputBytes.Length);
+    }
+
+    return Encoding.UTF8.GetString(decrypted);
+}
+
+byte[] IV = GenerateIV();
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 string connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(connection));
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-//var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy(name: MyAllowSpecificOrigins,
-//                      policy =>
-//                      {
-//                          policy.WithOrigins("http://localhost:5292/Data/Read/", "http://localhost:5292/Data/Write/");
-//                      });
-//});
 builder.Services.AddCors();
 builder.Services.AddAuthentication("Bearer")  
     .AddJwtBearer(options =>
@@ -52,7 +87,6 @@ builder.Services.AddAuthentication("Bearer")
 builder.Services.AddAuthorization();
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -62,23 +96,16 @@ app.UseCors(builder => { builder.AllowAnyOrigin(); builder.AllowAnyHeader(); bui
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-//app.MapControllerRoute(
-//    name: "d_create",
-//    pattern: "{controller=Data}/{action=Create}/");
 
-//app.Map(
-//    "{controller=Data}/{action=Index}/{id?}",
-//    (string controller, string action, string? id) =>
-//        action);
-
-app.MapGet("/Data/Read/", [Authorize](ApplicationContext db) => {
+app.MapGet("/Data/Read/", [Authorize](ApplicationContext db) => { // 
     try
     {
-        db.Data.ToList();
+        var data = db.Data.ToList();
+        return Results.Json(data);
     }
     catch
     {
-        Results.StatusCode(400);
+        return Results.StatusCode(400);
     }
 });
 app.MapPost("/Data/Write/", [Authorize](Data d, ApplicationContext db) =>
@@ -123,6 +150,21 @@ app.MapPost("/login/", (Users loginData, ApplicationContext db) =>
 
     return Results.Json(response);
 });
+app.MapPost("/registration", (Users loginData, ApplicationContext db) =>
+{
+    try
+    {
+        db.Users.Add(loginData);
+        db.SaveChanges();
+        return loginData;
+    }
+    catch
+    {
+        Results.StatusCode(400);
+        return null;
+    }
+});
+
 app.Run();
 public class AuthOptions
 {
@@ -132,3 +174,5 @@ public class AuthOptions
     public static SymmetricSecurityKey GetSymmetricSecurityKey() =>
         new SymmetricSecurityKey(Encoding.UTF8.GetBytes(KEY));
 }
+
+
