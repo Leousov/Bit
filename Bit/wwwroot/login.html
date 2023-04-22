@@ -120,6 +120,8 @@
                 console.log("Status: ", response.status);
         });
 
+
+
         document.getElementById("getData").addEventListener("click", async e => {
             e.preventDefault();
             const token = sessionStorage.getItem(tokenKey);
@@ -133,24 +135,35 @@
 
             try {
                 if (response.ok === true) {
-                    const d = await response.json();
-                    console.log(d);
-
                     const encoder = new TextEncoder();
-                    const data = encoder.encode(d);
-                    
-                    console.log(encryptString("asd", key));
-                    //const uint8Array = new Uint8Array(data);
-                    //const jsonObject = TextDecoder.decode(d);
-                    //const dataArray = jsonObject.data;
-                    //const uint8Array = new Uint8Array(dataArray);
-                    console.log(data);
+                    const decoder = new TextDecoder();
 
-                    const datas = decryptString(data, key);
+                    const jsonString = '[{"Id":7,"Value":"nknjknkkkkkkkkkk"},{"Id":8,"Value":"pjpjp"},{"Id":9,"Value":"nlknlk"},{"Id":10,"Value":"mnjn"},{"Id":11,"Value":"hdfhdfhd"},{"Id":12,"Value":"nnnll"},{"Id":13,"Value":" jnjnnl"},{"Id":14,"Value":"qweqew"}]';
+                    const list = JSON.parse(jsonString);
+                    console.log(list);
+                    const enc_f = encoder.encode(jsonString);
+                    console.log(decoder.decode(enc_f));
 
-                    //const ddatas = JSON.parse(datas)
-                    //const rows = document.querySelector("tbody");
-                    //ddatas.forEach(data => rows.append(row(data)));
+                    end_f = JSON.stringify(enc_f);
+                    console.log(end_f);
+
+
+
+
+
+
+                    const d = response.json();
+                    console.log(1);
+                    console.log(d);
+                    console.log(end_f);
+
+                    const dec = Uint8Array.from(JSON.parse(d));
+                    console.log(2);
+                    console.log(dec);
+
+                    const decrypted = decryptString(dec, key);
+                    console.log(3);
+                    console.log(decrypted);
                 } else {
                     console.log("Ошибка получения данных: " + response.status);
                 }
